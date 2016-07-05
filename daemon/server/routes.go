@@ -105,6 +105,9 @@ func (r *Router) initBackendRoutes() {
 		route{
 			"PolicyCanConsume", "POST", "/policy-consume-decision", r.policyCanConsume,
 		},
+		route{
+			"WeaveScopeReport", "GET", "/report", r.weaveScopeReport,
+		},
 	}
 }
 

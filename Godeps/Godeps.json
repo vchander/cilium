@@ -7,6 +7,11 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.8.7-60-gbe52937",
+			"Rev": "be52937128b38f1d99787bb476c789e2af1147f1"
+		},
+		{
 			"ImportPath": "github.com/beorn7/perks/quantile",
 			"Rev": "b965b613227fddccbfffe13eae360ed3fa822f8d"
 		},
@@ -376,6 +381,30 @@
 		{
 			"ImportPath": "github.com/vishvananda/netlink/nl",
 			"Rev": "5a5eb317d73bc513ae0cfea7d9ac3c39f145e1db"
+		},
+		{
+			"ImportPath": "github.com/weaveworks/ps",
+			"Rev": "70d17b2d6f760345ef36a0748751eddf7290a92c"
+		},
+		{
+			"ImportPath": "github.com/weaveworks/scope/common/mtime",
+			"Comment": "v0.17.1-195-g39be421",
+			"Rev": "39be42114193a6daa69b2c5dc066fa23556892b1"
+		},
+		{
+			"ImportPath": "github.com/weaveworks/scope/common/xfer",
+			"Comment": "v0.17.1-195-g39be421",
+			"Rev": "39be42114193a6daa69b2c5dc066fa23556892b1"
+		},
+		{
+			"ImportPath": "github.com/weaveworks/scope/report",
+			"Comment": "v0.17.1-195-g39be421",
+			"Rev": "39be42114193a6daa69b2c5dc066fa23556892b1"
+		},
+		{
+			"ImportPath": "github.com/weaveworks/scope/test/reflect",
+			"Comment": "v0.17.1-195-g39be421",
+			"Rev": "39be42114193a6daa69b2c5dc066fa23556892b1"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

@@ -22,6 +22,7 @@ import (
 	"github.com/cilium/cilium/common/types"
 
 	"github.com/gorilla/websocket"
+	"github.com/weaveworks/scope/report"
 )
 
 type bpfBackend interface {
@@ -59,6 +60,10 @@ type policyBackend interface {
 	PolicyCanConsume(ctx *types.SearchContext) (*types.SearchContextReply, error)
 }
 
+type weaveScope interface {
+	WeaveScopeReport() (*report.Report, error)
+}
+
 type control interface {
 	Ping() (*types.PingResponse, error)
 	Update(opts types.OptionMap) error
@@ -84,4 +89,5 @@ type CiliumBackend interface {
 type CiliumDaemonBackend interface {
 	CiliumBackend
 	ui
+	weaveScope
 }
