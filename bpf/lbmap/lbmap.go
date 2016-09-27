@@ -16,6 +16,8 @@
 package lbmap
 
 import (
+	"net"
+
 	"github.com/cilium/cilium/common/bpf"
 )
 
@@ -28,6 +30,9 @@ const (
 type ServiceKey interface {
 	bpf.MapKey
 
+	// Returns human readable string representation
+	String() string
+
 	// Returns true if the key is of type IPv6
 	IsIPv6() bool
 
@@ -36,26 +41,82 @@ type ServiceKey interface {
 
 	// Returns a RevNatValue matching a ServiceKey
 	RevNatValue() RevNatValue
+
+	// Returns the port set in the key or 0
+	GetPort() uint16
+
+	// Set the backend index (master: 0, backend: nth backend)
+	SetBackend(int)
+
+	// Return backend index
+	GetBackend() int
+
+	// Convert between host byte order and map byte order
+	Convert()
 }
 
 // Interface describing protocol independent value for services map
 type ServiceValue interface {
 	bpf.MapValue
 
+	// Returns human readable string representation
+	String() string
+
 	// Returns a RevNatKey matching a ServiceValue
 	RevNatKey() RevNatKey
+
+	// Set the number of backends
+	SetCount(int)
+
+	// Get the number of backends
+	GetCount() int
+
+	// Set address to map to (left blank for master)
+	SetAddress(net.IP) error
+
+	// Set port to map to (left blank for master)
+	SetPort(uint16)
+
+	// Set reverse NAT identifier
+	SetRevNat(int)
+
+	// Convert between host byte order and map byte order
+	Convert()
 }
 
 func UpdateService(key ServiceKey, value ServiceValue) error {
+	if _, err := key.Map().OpenOrCreate(); err != nil {
+		return err
+	}
+
+	key.Convert()
+	value.Convert()
 	return key.Map().Update(key, value)
 }
 
 func DeleteService(key ServiceKey) error {
+	key.Convert()
 	return key.Map().Delete(key)
 }
 
-func LookupService(key ServiceKey) (bpf.MapValue, error) {
-	return key.Map().Lookup(key)
+func LookupService(key ServiceKey) (ServiceValue, error) {
+	key.Convert()
+	val, err := key.Map().Lookup(key)
+	if err != nil {
+		return nil, err
+	}
+
+	key.Convert()
+
+	if key.IsIPv6() {
+		svc := val.(*Service6Value)
+		svc.Convert()
+		return svc, nil
+	} else {
+		svc := val.(*Service4Value)
+		svc.Convert()
+		return svc, nil
+	}
 }
 
 type RevNatKey interface {
@@ -66,20 +127,50 @@ type RevNatKey interface {
 
 	// Returns the BPF map matching the key type
 	Map() *bpf.Map
+
+	// Convert between host byte order and map byte order
+	Convert()
 }
 
 type RevNatValue interface {
 	bpf.MapValue
+
+	// Convert between host byte order and map byte order
+	Convert()
 }
 
 func UpdateRevNat(key RevNatKey, value RevNatValue) error {
+	if _, err := key.Map().OpenOrCreate(); err != nil {
+		return err
+	}
+
+	key.Convert()
+	value.Convert()
+
 	return key.Map().Update(key, value)
 }
 
 func DeleteRevNat(key RevNatKey) error {
+	key.Convert()
 	return key.Map().Delete(key)
 }
 
 func LookupRevNat(key RevNatKey) (RevNatValue, error) {
-	return key.Map().Lookup(key)
+	key.Convert()
+	val, err := key.Map().Lookup(key)
+	if err != nil {
+		return nil, err
+	}
+
+	key.Convert()
+
+	if key.IsIPv6() {
+		revnat := val.(*RevNat6Value)
+		revnat.Convert()
+		return revnat, nil
+	} else {
+		revnat := val.(*RevNat4Value)
+		revnat.Convert()
+		return revnat, nil
+	}
 }

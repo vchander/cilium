@@ -110,30 +110,22 @@ cat <<EOF | cilium -D policy import -
 EOF
 
 SVC_IP6="f00d::1:1"
-LB_PORT=0
-REVNAT=222
-sudo cilium lb create-services-map
-sudo cilium lb create-rev-nat-map
-sudo cilium lb update-service --rev $SVC_IP6 $LB_PORT 0 2 $REVNAT :: $LB_PORT
-sudo cilium lb update-service $SVC_IP6 $LB_PORT 1 2 $REVNAT $SERVER1_IP $LB_PORT
-sudo cilium lb update-service $SVC_IP6 $LB_PORT 2 2 $REVNAT $SERVER2_IP $LB_PORT
+sudo cilium lb update-service --rev --frontend "[$SVC_IP6]:0" --id 222 \
+                        --backend "[$SERVER1_IP]:0" \
+                        --backend "[$SERVER2_IP]:0"
 
 SVC_IP4="2.2.2.2"
-sudo cilium lb --ipv4 create-services-map
-sudo cilium lb --ipv4 create-rev-nat-map
-sudo cilium lb --ipv4 update-service --rev $SVC_IP4 $LB_PORT 0 2 $REVNAT 0.0.0.0 $LB_PORT
-sudo cilium lb --ipv4 update-service $SVC_IP4 $LB_PORT 1 2 $REVNAT $SERVER1_IP4 $LB_PORT
-sudo cilium lb --ipv4 update-service $SVC_IP4 $LB_PORT 2 2 $REVNAT $SERVER2_IP4 $LB_PORT
+sudo cilium lb update-service --rev --frontend "[$SVC_IP4]:$LB_PORT"  --id 222 \
+			--backend "$SERVER1_IP4:$LB_PORT" \
+			--backend "$SERVER2_IP4:$LB_PORT"
 
 LB_HOST_IP6="f00d::1:2"
-LB_PORT=0
-REVNAT=223
-sudo cilium lb update-service --rev $LB_HOST_IP6 $LB_PORT 0 1 $REVNAT :: $LB_PORT
-sudo cilium lb update-service $LB_HOST_IP6 $LB_PORT 1 1 $REVNAT $(host_ip6) $LB_PORT
+sudo cilium lb update-service --rev --frontend "[$LB_HOST_IP6]:0" --id 223 \
+			--backend "[$(host_ip6)]:0"
 
 LB_HOST_IP4="3.3.3.3"
-sudo cilium lb --ipv4 update-service --rev $LB_HOST_IP4 $LB_PORT 0 1 $REVNAT 0.0.0.0 $LB_PORT
-sudo cilium lb --ipv4 update-service $LB_HOST_IP4 $LB_PORT 1 1 $REVNAT $(host_ip4) $LB_PORT
+sudo cilium lb update-service --rev --frontend "$LB_HOST_IP4:0" --id 223 \
+			--backend "$(host_ip4):0"
 
 ## Test 1: local host => bpf_lb => local container
 monitor_clear
