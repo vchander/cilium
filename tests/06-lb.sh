@@ -109,6 +109,59 @@ cat <<EOF | cilium -D policy import -
 }
 EOF
 
+# Clear eventual old entries, this may fail if the maps have not been created
+sudo cilium lb delete-service --all || true
+sudo cilium lb delete-rev-nat --all || true
+
+# Create IPv4 L3 service without reverse entry
+sudo cilium lb update-service --frontend 4.4.4.4:0 --id 1 --backend 5.5.5.5:0 || {
+	abort "Unable to add IPv4 service entry"
+}
+
+sudo cilium lb dump-service
+
+# Check if reverse NAT entry was created anyway, should fail
+sudo cilium lb get-rev-nat 1 2> /dev/null && {
+	abort "Unexpected reverse NAT entry"
+}
+
+# Attempt deletion without providing a key, should fail
+sudo cilium lb delete-service 2> /dev/null && {
+	abort "Unexpected success in deleting service without a key"
+}
+
+# Delete IPv4 L3 entry
+sudo cilium lb delete-service 4.4.4.4:0 || {
+	abort "Unable to delete IPv4 service entry"
+}
+
+# Mixing L3/L4 in frontend and backend is not allowed
+sudo cilium lb update-service --frontend 4.4.4.4:0 --id 1 --backend 5.5.5.5:80 2> /dev/null && {
+	abort "Unexpected success in creating mixed L3/L4 service"
+}
+
+# Add L4 IPv4 entry
+sudo cilium lb update-service --frontend 4.4.4.4:40 --rev --id 1 --backend 5.5.5.5:80 || {
+	abort "Unable to add IPv4 service entry"
+}
+
+sudo cilium lb dump-service
+
+# Check if requested reverse NAT entry exists
+sudo cilium lb get-rev-nat 1 || {
+	abort "Unable to find reverse NAT entry that should have been created"
+}
+
+# Try an L3 lookup for the created L4 entry, should fail
+sudo cilium lb delete-service 4.4.4.4:0 2> /dev/null && {
+	abort "Unexpected success in looking up with L3 key of L4 entry"
+}
+
+# Delete L4 entry
+sudo cilium lb delete-service 4.4.4.4:80 || {
+	abort "Unable to delete IPv4 service entry"
+}
+
 SVC_IP6="f00d::1:1"
 sudo cilium lb update-service --rev --frontend "[$SVC_IP6]:0" --id 222 \
                         --backend "[$SERVER1_IP]:0" \
