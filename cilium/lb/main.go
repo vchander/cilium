@@ -222,15 +222,12 @@ func cliDumpRevNat(ctx *cli.Context) {
 	fmt.Printf("IPv6:\n")
 	if err := lbmap.RevNat6Map.Dump(lbmap.RevNat6DumpParser, dumpRevNat6); err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to dump map: %s\n", err)
-		os.Exit(1)
 	}
 
 	fmt.Printf("IPv4:\n")
 	if err := lbmap.RevNat4Map.Dump(lbmap.RevNat4DumpParser, dumpRevNat4); err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to dump map: %s\n", err)
-		os.Exit(1)
 	}
-
 }
 
 func parseServiceKey(address string) lbmap.ServiceKey {
@@ -334,6 +331,19 @@ func cliUpdateService(ctx *cli.Context) {
 			os.Exit(1)
 		}
 
+		if addRev {
+			revKey := svc.RevNatKey()
+			revVal := key.RevNatValue()
+
+			fmt.Printf("Adding %+v %+v\n", revKey, revVal)
+			if err := lbmap.UpdateRevNat(revKey, revVal); err != nil {
+				fmt.Fprintf(os.Stderr, "%s\n", err)
+				os.Exit(1)
+			}
+
+			fmt.Printf("Added reverse NAT entry\n")
+		}
+
 		idx++
 	}
 
@@ -351,20 +361,6 @@ func cliUpdateService(ctx *cli.Context) {
 	}
 
 	fmt.Printf("Added %d backends\n", idx-1)
-
-	if addRev {
-		revKey := svc.RevNatKey()
-		revVal := key.RevNatValue()
-
-		fmt.Printf("Adding %+v %+v\n", revKey, revVal)
-		if err := lbmap.UpdateRevNat(revKey, revVal); err != nil {
-			fmt.Fprintf(os.Stderr, "%s\n", err)
-			os.Exit(1)
-		}
-
-		fmt.Printf("Added reverse NAT entry\n")
-	}
-
 }
 
 func cliUpdateRevNat(ctx *cli.Context) {
